@@ -167,7 +167,7 @@ class ControlsFlyer(UnityDrone):
     def waypoint_transition(self):
         #print("waypoint transition")
         self.waypoint_number = self.waypoint_number + 1
-        self.target_position = self.all_waypoints.pop(0)
+        self.target_position = np.array([0.0, 0.0, -3.0]) #self.all_waypoints.pop(0)
         self.flight_state = States.WAYPOINT
 
     def landing_transition(self):
