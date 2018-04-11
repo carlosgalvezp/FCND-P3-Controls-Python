@@ -37,6 +37,10 @@ class NonlinearController(object):
     def __init__(self):
         """Initialize the controller object and control gains"""
 
+        # Roll-pithc controller (P controllers)
+        self.roll_controller_ = PController(k_p=8.0)
+        self.pitch_controller_ = PController(k_p=8.0)
+
         # Body-rate controller (P controllers)
         self.p_controller_ = PController(k_p=20.0)
         self.q_controller_ = PController(k_p=20.0)
@@ -140,11 +144,24 @@ class NonlinearController(object):
         Args:
             target_acceleration: 2-element numpy array (north_acceleration_cmd,east_acceleration_cmd) in m/s^2
             attitude: 3-element numpy array (roll, pitch, yaw) in radians
-            thrust_cmd: vehicle thruts command in Newton
+            thrust_cmd: vehicle thrust command in Newton
 
         Returns: 2-element numpy array, desired rollrate (p) and pitchrate (q) commands in radians/s
         """
-        return np.array([0.0, 0.0])
+        R = euler2RM(*attitude)
+
+        b_a_x = R[0][2]
+        b_a_y = R[1][2]
+
+        b_c_x_dot = self.roll_controller_.control(acceleration_cmd[0] - b_a_x)
+        b_c_y_dot = self.pitch_controller_.control(acceleration_cmd[1] - b_a_y)
+
+        M = np.array([[R[1][0], -R[0][0]],
+                      [R[1][1], -R[0][1]]])
+
+        b_c_dot = np.array([b_c_x_dot, b_c_y_dot]).transpose()
+
+        return (1.0 / R[2][2]) * np.dot(M, b_c_dot)
 
     def body_rate_control(self, body_rate_cmd, body_rate):
         """ Generate the roll, pitch, yaw moment commands in the body frame
