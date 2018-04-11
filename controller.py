@@ -37,6 +37,11 @@ class NonlinearController(object):
     def __init__(self):
         """Initialize the controller object and control gains"""
 
+        # Body-rate controller (P controllers)
+        self.p_controller_ = PController(k_p=20.0)
+        self.q_controller_ = PController(k_p=20.0)
+        self.r_controller_ = PController(k_p=20.0)
+
         # Altitude controller (PD controller)
         self.altitude_controller_ = PDController(k_p=50.0, k_d=25.0)
 
@@ -150,7 +155,15 @@ class NonlinearController(object):
 
         Returns: 3-element numpy array, desired roll moment, pitch moment, and yaw moment commands in Newtons*meters
         """
-        return np.array([0.0, 0.0, 0.0])
+        moment_p = MOI[0] * self.p_controller_.control(body_rate_cmd[0] - body_rate[0])
+        moment_q = MOI[1] * self.q_controller_.control(body_rate_cmd[1] - body_rate[1])
+        moment_r = MOI[2] * self.r_controller_.control(body_rate_cmd[2] - body_rate[2])
+
+        moment_p = np.clip(moment_p, -MAX_TORQUE, MAX_TORQUE)
+        moment_q = np.clip(moment_q, -MAX_TORQUE, MAX_TORQUE)
+        moment_r = np.clip(moment_r, -MAX_TORQUE, MAX_TORQUE)
+
+        return np.array([moment_p, moment_q, moment_r])
 
     def yaw_control(self, yaw_cmd, yaw):
         """ Generate the target yawrate
