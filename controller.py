@@ -36,21 +36,25 @@ class PController(PDController):
 class NonlinearController(object):
     def __init__(self):
         """Initialize the controller object and control gains"""
+        # Altitude controller (PD controller)
+        self.altitude_controller_ = PDController(k_p=50.0, k_d=25.0)
 
-        # Roll-pithc controller (P controllers)
-        self.roll_controller_ = PController(k_p=8.0)
-        self.pitch_controller_ = PController(k_p=8.0)
+        # Yaw controller (P controller)
+        self.yaw_controller_ = PController(k_p=8.0)
 
         # Body-rate controller (P controllers)
         self.p_controller_ = PController(k_p=20.0)
         self.q_controller_ = PController(k_p=20.0)
         self.r_controller_ = PController(k_p=20.0)
 
-        # Altitude controller (PD controller)
-        self.altitude_controller_ = PDController(k_p=50.0, k_d=25.0)
+        # Roll-pitch controller (P controllers)
+        self.roll_controller_ = PController(k_p=8.0)
+        self.pitch_controller_ = PController(k_p=8.0)
 
-        # Yaw controller (P controller)
-        self.yaw_controller_ = PController(k_p=8.0)
+        # Lateral controller (PD controllers)
+        self.x_controller_ = PDController(k_p=5.0, k_d=0.0)
+        self.y_controller_ = PDController(k_p=5.0, k_d=0.0)
+
 
     def trajectory_control(self, position_trajectory, yaw_trajectory, time_trajectory, current_time):
         """Generate a commanded position, velocity and yaw based on the trajectory
@@ -110,7 +114,14 @@ class NonlinearController(object):
 
         Returns: desired vehicle 2D acceleration in the local frame [north, east]
         """
-        return np.array([0.0, 0.0])
+        acc_x = self.x_controller_.control(local_position_cmd[0] - local_position[0],
+                                           local_velocity_cmd[0] - local_velocity[0],
+                                           acceleration_ff[0])
+
+        acc_y = self.y_controller_.control(local_position_cmd[1] - local_position[1],
+                                           local_velocity_cmd[1] - local_velocity[1],
+                                           acceleration_ff[1])
+        return np.array([acc_x, acc_y])
 
     def altitude_control(self, altitude_cmd, vertical_velocity_cmd, altitude, vertical_velocity, attitude, acceleration_ff=0.0):
         """Generate vertical acceleration (thrust) command
