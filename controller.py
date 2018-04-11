@@ -15,10 +15,31 @@ MOI = np.array([0.005, 0.005, 0.01])  # [kg * m^2]
 MAX_THRUST = 10.0                     # [N]
 MAX_TORQUE = 1.0                      # [N * m]
 
+
+class PDController(object):
+    def __init__(self, k_p, k_d):
+        self.k_p = k_p
+        self.k_d = k_d
+
+    def control(self, error, error_dot):
+        return self.k_p * error + self.k_d * error_dot
+
+
+class PController(PDController):
+    def __init__(self, k_p):
+        super().__init__(k_p, k_d=0.0)
+
+    def control(self, error):
+        return super().control(error, error_dot=0.0)
+
+
 class NonlinearController(object):
     def __init__(self):
         """Initialize the controller object and control gains"""
-        return
+
+
+        # Yaw controller (P controller)
+        self.yaw_controller_ = PController(k_p = 8.0)
 
     def trajectory_control(self, position_trajectory, yaw_trajectory, time_trajectory, current_time):
         """Generate a commanded position, velocity and yaw based on the trajectory
@@ -127,4 +148,5 @@ class NonlinearController(object):
 
         Returns: target yawrate in radians/sec
         """
-        return 0.0
+        error = yaw_cmd - yaw
+        return self.yaw_controller_.control(error)
