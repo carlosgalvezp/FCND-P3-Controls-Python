@@ -21,8 +21,8 @@ class PDController(object):
         self.k_p = k_p
         self.k_d = k_d
 
-    def control(self, error, error_dot):
-        return self.k_p * error + self.k_d * error_dot
+    def control(self, error, error_dot, feed_forward=0.0):
+        return self.k_p * error + self.k_d * error_dot + feed_forward
 
 
 class PController(PDController):
@@ -37,9 +37,11 @@ class NonlinearController(object):
     def __init__(self):
         """Initialize the controller object and control gains"""
 
+        # Altitude controller (PD controller)
+        self.altitude_controller_ = PDController(k_p=2.0, k_d=1.0)
 
         # Yaw controller (P controller)
-        self.yaw_controller_ = PController(k_p = 8.0)
+        self.yaw_controller_ = PController(k_p=8.0)
 
     def trajectory_control(self, position_trajectory, yaw_trajectory, time_trajectory, current_time):
         """Generate a commanded position, velocity and yaw based on the trajectory
@@ -114,7 +116,14 @@ class NonlinearController(object):
 
         Returns: thrust command for the vehicle (+up)
         """
-        return 0.0
+        R = euler2RM(*attitude)
+        b_z = R[2][2]
+
+        error_z = altitude_cmd - altitude
+        error_z_dot = vertical_velocity_cmd - vertical_velocity
+
+        u_1_bar = self.altitude_controller_.control(error_z, error_z_dot, acceleration_ff)
+        return DRONE_MASS_KG * ((u_1_bar - (-GRAVITY)) / b_z)
 
     def roll_pitch_controller(self, acceleration_cmd, attitude, thrust_cmd):
         """ Generate the rollrate and pitchrate commands in the body frame
