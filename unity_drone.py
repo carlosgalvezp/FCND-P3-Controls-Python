@@ -290,7 +290,7 @@ class UnityDrone(Drone):
     def _show_plots(self):
         self._horizontal_plot = self._v.line(self.all_horizontal_errors, X=self.all_times, opts=dict(title="Horizontal Error",xlabel="Time(s)",ylabel="Error (m)"))
         self._vertical_plot = self._v.line(self.all_vertical_errors, X=self.all_times, opts=dict(title="Vertical Error", xlabel="Time(s)", ylabel="Error (m)"))
-        
+
     def _initialize_plots(self):
         #self._horizontal_plot = self._v.line(np.array([0.0]),X=np.array([0.0]),opts=dict(title="Horizontal Error",xlabel="Time(s)",ylabel="Error (m)"))
         pass

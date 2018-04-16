@@ -67,8 +67,8 @@ class ControlsFlyer(UnityDrone):
 
     def attitude_controller(self):
         self.thrust_cmd = self.controller.altitude_control(
-                -self.local_position_target[2],
-                -self.local_velocity_target[2],
+                3.0, #-self.local_position_target[2],
+                0.0, #-self.local_velocity_target[2],
                 -self.local_position[2],
                 -self.local_velocity[2],
                 self.attitude,
@@ -78,7 +78,7 @@ class ControlsFlyer(UnityDrone):
                 self.attitude,
                 self.thrust_cmd)
         yawrate_cmd = self.controller.yaw_control(
-                self.attitude_target[2],
+                np.pi/2.0, #self.attitude_target[2],
                 self.attitude[2])
         self.body_rate_target = np.array(
                 [roll_pitch_rate_cmd[0], roll_pitch_rate_cmd[1], yawrate_cmd])
@@ -167,7 +167,7 @@ class ControlsFlyer(UnityDrone):
     def waypoint_transition(self):
         #print("waypoint transition")
         self.waypoint_number = self.waypoint_number + 1
-        self.target_position = np.array([0.0, 0.0, -3.0]) #self.all_waypoints.pop(0)
+        self.target_position = self.all_waypoints.pop(0)
         self.flight_state = States.WAYPOINT
 
     def landing_transition(self):
@@ -208,5 +208,7 @@ if __name__ == "__main__":
     #conn = WebSocketConnection('ws://127.0.0.1:5760')
     drone = ControlsFlyer(conn)
     time.sleep(2)
-    drone.start()
-    drone.print_mission_score()
+    try:
+        drone.start()
+    except KeyboardInterrupt:
+        drone.print_mission_score()
