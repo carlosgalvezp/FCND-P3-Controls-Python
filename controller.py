@@ -124,10 +124,6 @@ class NonlinearController(object):
 
         Returns: desired vehicle 2D acceleration in the local frame [north, east]
         """
-        # XXX REmove!
-        local_position_cmd = np.array([0.0, 3.0])
-        local_velocity_cmd = np.array([0.0, 0.0])
-
         acc_x = self.x_controller_.control(local_position_cmd[0] - local_position[0],
                                            local_velocity_cmd[0] - local_velocity[0],
                                            acceleration_ff[0])
@@ -136,7 +132,6 @@ class NonlinearController(object):
                                            local_velocity_cmd[1] - local_velocity[1],
                                            acceleration_ff[1])
 
-        print('cmd X: {},  current x: {}, acc X: {}'.format(local_position_cmd[0], local_position[0], acc_x))
         return np.array([acc_x, acc_y])
 
     def altitude_control(self, altitude_cmd, vertical_velocity_cmd, altitude, vertical_velocity, attitude, acceleration_ff=0.0):
@@ -152,10 +147,6 @@ class NonlinearController(object):
 
         Returns: thrust command for the vehicle (+up)
         """
-        # XXX remove!
-        altitude_cmd = 3.0
-        vertical_velocity_cmd = 0.0
-
         thrust = 0.0
 
         R = euler2RM(*attitude)
@@ -240,7 +231,5 @@ class NonlinearController(object):
 
         Returns: target yawrate in radians/sec
         """
-        # XXX REMOVE
-        yaw_cmd = 0.0
         error = yaw_cmd - yaw
-        return 0.0 #self.yaw_controller_.control(error)
+        return self.yaw_controller_.control(error)

@@ -211,4 +211,6 @@ if __name__ == "__main__":
     try:
         drone.start()
     except KeyboardInterrupt:
+        pass
+    finally:
         drone.print_mission_score()
