@@ -62,8 +62,8 @@ class NonlinearController(object):
         self.pitch_controller_ = PController(k_p=10.0)
 
         # Lateral controller (PD controllers)
-        self.x_controller_ = PDController(k_p=0.0, k_d=0.0)
-        self.y_controller_ = PDController(k_p=0.0, k_d=0.0)
+        self.x_controller_ = PDController(k_p=0.3, k_d=0.2)
+        self.y_controller_ = PDController(k_p=0.3, k_d=0.2)
 
 
     def trajectory_control(self, position_trajectory, yaw_trajectory, time_trajectory, current_time):
@@ -124,6 +124,10 @@ class NonlinearController(object):
 
         Returns: desired vehicle 2D acceleration in the local frame [north, east]
         """
+        # XXX REmove!
+        local_position_cmd = np.array([0.0, 3.0])
+        local_velocity_cmd = np.array([0.0, 0.0])
+
         acc_x = self.x_controller_.control(local_position_cmd[0] - local_position[0],
                                            local_velocity_cmd[0] - local_velocity[0],
                                            acceleration_ff[0])
@@ -148,6 +152,10 @@ class NonlinearController(object):
 
         Returns: thrust command for the vehicle (+up)
         """
+        # XXX remove!
+        altitude_cmd = 3.0
+        vertical_velocity_cmd = 0.0
+
         thrust = 0.0
 
         R = euler2RM(*attitude)
@@ -197,13 +205,12 @@ class NonlinearController(object):
                 b_c_dot = np.array([b_c_x_dot, b_c_y_dot])
 
                 roll_pitch_rate_cmd = (1.0 / R[2,2]) * np.matmul(M, b_c_dot)
-                print('B_C_X: {}, B_A_X: {}, B_C_X_D: {}, PITCH RATE: {}'.format(b_c_x, b_a_x, b_c_x_dot, roll_pitch_rate_cmd[1]))
             else:
                 print('R[2][2] = 0.0, cannot compute roll_pitch_rate!')
         else:
             print('thrust_cmd = 0.0, cannot compute roll_pitch_rate!')
 
-        return np.array([0.0, roll_pitch_rate_cmd[1]])
+        return roll_pitch_rate_cmd
 
     def body_rate_control(self, body_rate_cmd, body_rate):
         """ Generate the roll, pitch, yaw moment commands in the body frame
@@ -222,8 +229,6 @@ class NonlinearController(object):
         moment_q = np.clip(moment_q, -MAX_TORQUE, MAX_TORQUE)
         moment_r = np.clip(moment_r, -MAX_TORQUE, MAX_TORQUE)
 
-        print('BRC: {}, BR: {} MP: {}'.format(body_rate_cmd[1], body_rate[1], moment_q))
-
         return np.array([moment_p, moment_q, moment_r])
 
     def yaw_control(self, yaw_cmd, yaw):
@@ -235,5 +240,7 @@ class NonlinearController(object):
 
         Returns: target yawrate in radians/sec
         """
+        # XXX REMOVE
+        yaw_cmd = 0.0
         error = yaw_cmd - yaw
         return 0.0 #self.yaw_controller_.control(error)
