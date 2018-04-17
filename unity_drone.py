@@ -262,9 +262,11 @@ class UnityDrone(Drone):
         """Prints the maximum xtrack error, total time, and mission success
 
         """
-        print('Maximum Horizontal Error: ', self._maximum_horizontal_error)
-        print('Maximum Vertical Error: ', self._maximum_vertical_error)
-        print('Mission Time: ', self._mission_time)
+        print('Maximum Horizontal Error: {}/{}'.format(self._maximum_horizontal_error,
+                                                       self._threshold_horizontal_error))
+        print('Maximum Vertical Error: {}/{}'.format(self._maximum_vertical_error,
+                                                     self._threshold_vertical_error))
+        print('Mission Time: {}/{}'.format(self._mission_time, self._threshold_time))
         print('Mission Success: ', self._mission_success)
         if self._visdom_connected:
             self._show_plots()
