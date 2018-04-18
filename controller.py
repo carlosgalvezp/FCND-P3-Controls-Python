@@ -42,6 +42,14 @@ class PController(PDController):
     def control(self, error):
         return super().control(error, error_dot=0.0, feed_forward=0.0)
 
+def normalize_angle(x):
+    """Normalize angle to the range [pi, -pi]."""
+    x = (x + np.pi) % (2.0*np.pi)
+
+    if x < 0:
+        x += 2.0*np.pi
+
+    return x - np.pi
 
 class NonlinearController(object):
     def __init__(self):
@@ -231,5 +239,5 @@ class NonlinearController(object):
 
         Returns: target yawrate in radians/sec
         """
-        error = yaw_cmd - yaw
+        error = normalize_angle(yaw_cmd - yaw)
         return self.yaw_controller_.control(error)
