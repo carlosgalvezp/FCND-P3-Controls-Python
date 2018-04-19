@@ -61,17 +61,17 @@ class NonlinearController(object):
         self.yaw_controller_ = PController(k_p=4.0)
 
         # Body-rate controller (P controllers)
-        self.p_controller_ = PController(k_p=5.0)
-        self.q_controller_ = PController(k_p=5.0)
+        self.p_controller_ = PController(k_p=25.0)
+        self.q_controller_ = PController(k_p=25.0)
         self.r_controller_ = PController(k_p=20.0)
 
         # Roll-pitch controller (P controllers)
-        self.roll_controller_ = PController(k_p=10.0)
-        self.pitch_controller_ = PController(k_p=10.0)
+        self.roll_controller_ = PController(k_p=20.0)
+        self.pitch_controller_ = PController(k_p=20.0)
 
         # Lateral controller (PD controllers)
-        self.x_controller_ = PDController(k_p=0.3, k_d=0.2)
-        self.y_controller_ = PDController(k_p=0.3, k_d=0.2)
+        self.x_controller_ = PDController(k_p=1.2, k_d=0.4)
+        self.y_controller_ = PDController(k_p=1.2, k_d=0.4)
 
 
     def trajectory_control(self, position_trajectory, yaw_trajectory, time_trajectory, current_time):
