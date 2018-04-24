@@ -190,8 +190,8 @@ class NonlinearController(object):
             if abs(R[2][2]) > EPSILON:
                 # Thrust comes with positive up, but in NED it should be positive down!
                 # Also, b_* must be dimensionless so convert thrust to acceleration
-                b_c_x = acceleration_cmd[0] / (-thrust_cmd * DRONE_MASS_KG)
-                b_c_y = acceleration_cmd[1] / (-thrust_cmd * DRONE_MASS_KG)
+                b_c_x = acceleration_cmd[0] / (-thrust_cmd / DRONE_MASS_KG)
+                b_c_y = acceleration_cmd[1] / (-thrust_cmd / DRONE_MASS_KG)
 
                 b_a_x = R[0,2]
                 b_a_y = R[1,2]
