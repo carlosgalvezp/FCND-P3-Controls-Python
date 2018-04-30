@@ -70,8 +70,8 @@ class NonlinearController(object):
         self.pitch_controller_ = PController(k_p=20.0)
 
         # Lateral controller (PD controllers)
-        self.x_controller_ = PDController(k_p=1.2, k_d=0.4)
-        self.y_controller_ = PDController(k_p=1.2, k_d=0.4)
+        self.x_controller_ = PDController(k_p=5.0, k_d=1.75)
+        self.y_controller_ = PDController(k_p=5.0, k_d=1.75)
 
 
     def trajectory_control(self, position_trajectory, yaw_trajectory, time_trajectory, current_time):

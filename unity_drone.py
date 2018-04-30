@@ -61,6 +61,10 @@ class UnityDrone(Drone):
         self._time0 = None
         self._mission_success = True
         
+        self.all_x = []
+        self.all_y = []
+        self.all_z = []
+
         #Visdom visualizer
         self._visdom_connected = False
         if visdom_available:
@@ -121,6 +125,16 @@ class UnityDrone(Drone):
         self.check_mission_success()
         if self._visdom_connected:
             self._add_visual_data()
+
+        self.all_x.append(self.local_position[0])
+        self.all_y.append(self.local_position[1])
+        self.all_z.append(self.local_position[2])
+
+        if self._horizontal_error > self._threshold_horizontal_error or\
+           self._vertical_error > self._threshold_vertical_error:
+           import sys
+           print('ERROR: {}, {}'.format(self._horizontal_error, self._vertical_error))
+           sys.exit(0)
             
     @property
     def local_velocity_target(self):
@@ -270,7 +284,11 @@ class UnityDrone(Drone):
         print('Mission Success: ', self._mission_success)
         if self._visdom_connected:
             self._show_plots()
-        
+
+        with open('real_trajectory.txt', 'w') as f:
+            for i in range(len(self.all_x)):
+                f.write('{}, {}, {}\n'.format(self.all_x[i], self.all_y[i], self.all_z[i]))
+
     def check_mission_success(self):
         """Check the mission success criterion (xtrack and time)
         
