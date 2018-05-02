@@ -15,25 +15,15 @@ MOI = np.array([0.005, 0.005, 0.01])  # [kg * m^2]
 MAX_THRUST = 10.0                     # [N]
 MAX_TORQUE = 1.0                      # [N * m]
 EPSILON = 1.0E-4
+MAX_TILT = 1.0
 
-class PIDController(object):
-    def __init__(self, k_p, k_i, k_d):
+class PDController(object):
+    def __init__(self, k_p, k_d):
         self.k_p = k_p
-        self.k_i = k_i
         self.k_d = k_d
 
-        self.error_sum = 0.0
-
     def control(self, error, error_dot, feed_forward=0.0):
-        self.error_sum += error
-        return self.k_p * error + self.k_i * self.error_sum + self.k_d * error_dot + feed_forward
-
-class PDController(PIDController):
-    def __init__(self, k_p, k_d):
-        super().__init__(k_p=k_p, k_i=0.0, k_d=k_d)
-
-    def control(self, error, error_dot, feed_forward=0.0):
-        return super().control(error, error_dot, feed_forward)
+        return self.k_p * error +  self.k_d * error_dot + feed_forward
 
 class PController(PDController):
     def __init__(self, k_p):
@@ -55,23 +45,26 @@ class NonlinearController(object):
     def __init__(self):
         """Initialize the controller object and control gains"""
         # Altitude controller (PD controller)
-        self.altitude_controller_ = PIDController(k_p=75.0, k_i=0.5, k_d=20.0)
+        self.altitude_controller_ = PDController(k_p=8.0, k_d=4.0)
 
         # Yaw controller (P controller)
-        self.yaw_controller_ = PController(k_p=4.0)
+        self.yaw_controller_ = PController(k_p=5.5)
 
         # Body-rate controller (P controllers)
-        self.p_controller_ = PController(k_p=25.0)
-        self.q_controller_ = PController(k_p=25.0)
-        self.r_controller_ = PController(k_p=20.0)
+        pq_controller = PController(k_p=20.0)
+        self.p_controller_ = pq_controller
+        self.q_controller_ = pq_controller
+        self.r_controller_ = PController(k_p=7.5)
 
         # Roll-pitch controller (P controllers)
-        self.roll_controller_ = PController(k_p=20.0)
-        self.pitch_controller_ = PController(k_p=20.0)
+        roll_pitch_controller = PController(k_p=8.0)
+        self.roll_controller_ = roll_pitch_controller
+        self.pitch_controller_ = roll_pitch_controller
 
         # Lateral controller (PD controllers)
-        self.x_controller_ = PDController(k_p=5.0, k_d=1.75)
-        self.y_controller_ = PDController(k_p=5.0, k_d=1.75)
+        xy_controller = PDController(k_p=5.0, k_d=4.0)
+        self.x_controller_ = xy_controller
+        self.y_controller_ = xy_controller
 
 
     def trajectory_control(self, position_trajectory, yaw_trajectory, time_trajectory, current_time):
@@ -165,7 +158,7 @@ class NonlinearController(object):
             error_z_dot = vertical_velocity_cmd - vertical_velocity
 
             u_1_bar = self.altitude_controller_.control(error_z, error_z_dot, acceleration_ff)
-            thrust = DRONE_MASS_KG * ((u_1_bar - (-GRAVITY)) / b_z)
+            thrust = DRONE_MASS_KG * u_1_bar / b_z
             thrust = np.clip(thrust, 0.0, MAX_THRUST)
         else:
             print('b_z = 0.0, cannot compute thrust!')
@@ -188,17 +181,25 @@ class NonlinearController(object):
             R = euler2RM(*attitude)
 
             if abs(R[2][2]) > EPSILON:
+                # Current attitude
+                b_a_x = R[0,2]
+                b_a_y = R[1,2]
+
+                # Desired attitude
                 # Thrust comes with positive up, but in NED it should be positive down!
                 # Also, b_* must be dimensionless so convert thrust to acceleration
                 b_c_x = acceleration_cmd[0] / (-thrust_cmd / DRONE_MASS_KG)
                 b_c_y = acceleration_cmd[1] / (-thrust_cmd / DRONE_MASS_KG)
 
-                b_a_x = R[0,2]
-                b_a_y = R[1,2]
+                # Clip desired attitude to ensure the drone won't go upside down
+                b_c_x = np.clip(b_c_x, -MAX_TILT, MAX_TILT)
+                b_c_y = np.clip(b_c_y, -MAX_TILT, MAX_TILT)
 
+                # Compute desired roll and pitch rates in world frame
                 b_c_x_dot = self.roll_controller_.control(b_c_x - b_a_x)
                 b_c_y_dot = self.pitch_controller_.control(b_c_y - b_a_y)
 
+                # Convert to body frame
                 M = np.array([[R[1,0], -R[0,0]],
                               [R[1,1], -R[0,1]]])
                 b_c_dot = np.array([b_c_x_dot, b_c_y_dot])

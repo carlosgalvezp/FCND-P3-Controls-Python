@@ -133,7 +133,6 @@ class UnityDrone(Drone):
         if self._horizontal_error > self._threshold_horizontal_error or\
            self._vertical_error > self._threshold_vertical_error:
            import sys
-           print('ERROR: {}, {}'.format(self._horizontal_error, self._vertical_error))
            sys.exit(0)
             
     @property
